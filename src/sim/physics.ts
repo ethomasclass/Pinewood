@@ -133,8 +133,10 @@ export function stepCar(
   //     negative through the transition, and proportional to centre-of-mass height. ---
   const gravityForce = m * G * Math.sin(slope) * (1 + a.com.comY * slopeGradient)
 
-  // --- Axle-bore friction, the dominant loss. ---
-  const rolling = a.rollingResistance * config.frictionVariance
+  // --- Axle-bore friction, the dominant loss, plus the braking pad once the car is
+  //     past the finish line and into the catch section. ---
+  const braking = geometry.brakingAt(state.s)
+  const rolling = a.rollingResistance * config.frictionVariance + braking
   let frictionForce = rolling * normalForce
 
   // --- Aerodynamic drag. ---
@@ -160,6 +162,9 @@ export function stepCar(
 
   const vPrev = state.v
   state.v = Math.max(0, state.v + accel * dt)
+  // Braking friction cannot push a car backwards, and a car crawling on the catch
+  // pad should settle rather than creep.
+  if (braking > 0 && state.v < 0.06) state.v = 0
   state.s += state.v * dt
   state.wheelAngle += (state.v / WHEEL.radius) * dt
 

@@ -112,10 +112,16 @@ export function simulateRace(entries: RaceEntry[], options: SimulateOptions): Ra
   // Emit the first frame before any motion so playback starts on the grid.
   pushFrames(frames, states, configs, entries, geometry)
 
-  while (time < maxDuration && finishedCount < entries.length) {
+  // The heat is over when every car has been timed AND has come to rest in the catch
+  // section. Freezing cars on the line the moment the beam breaks is what made the
+  // finish look like the race had been switched off.
+  const fieldSettled = () =>
+    finishedCount >= entries.length &&
+    states.every((state, i) => state.v <= 0.02 || noseS(state, configs[i]) >= track.length + track.runoutLength)
+
+  while (time < maxDuration && !fieldSettled()) {
     for (let i = 0; i < entries.length; i++) {
       const state = states[i]
-      if (state.finished) continue
       const config = configs[i]
 
       if (!state.launched) {
@@ -134,7 +140,9 @@ export function simulateRace(entries: RaceEntry[], options: SimulateOptions): Ra
       topSpeeds[i] = Math.max(topSpeeds[i], state.v)
       if (state.wheelie) wheelies[i] = true
 
-      if (state.lastContact && state.lastContact.severity > 0.06) {
+      // Events stop at the finish line even though motion does not: a car brushing
+      // the rail while it coasts to a stop is not something to cut away to.
+      if (!state.finished && state.lastContact && state.lastContact.severity > 0.06) {
         railHits[i]++
         events.push({
           t: time,
@@ -146,11 +154,11 @@ export function simulateRace(entries: RaceEntry[], options: SimulateOptions): Ra
         })
       }
 
-      if (!state.enteredDrop && after >= milestones.dropStart) {
+      if (!state.finished && !state.enteredDrop && after >= milestones.dropStart) {
         state.enteredDrop = true
         events.push({ t: time, type: 'drop-enter', lane: state.lane })
       }
-      if (!state.exitedDrop && after >= milestones.dropEnd) {
+      if (!state.finished && !state.exitedDrop && after >= milestones.dropEnd) {
         state.exitedDrop = true
         events.push({ t: time, type: 'drop-exit', lane: state.lane, speed: state.v })
       }
@@ -160,7 +168,7 @@ export function simulateRace(entries: RaceEntry[], options: SimulateOptions): Ra
         [milestones.half, 'half'],
         [milestones.threeQuarter, 'three-quarter'],
       ]
-      for (let mi = state.milestonesPassed; mi < milestoneList.length; mi++) {
+      for (let mi = state.finished ? milestoneList.length : state.milestonesPassed; mi < milestoneList.length; mi++) {
         const [pos, name] = milestoneList[mi]
         if (after >= pos) {
           state.milestonesPassed = mi + 1
@@ -174,8 +182,9 @@ export function simulateRace(entries: RaceEntry[], options: SimulateOptions): Ra
         } else break
       }
 
-      if (after >= track.length) {
+      if (!state.finished && after >= track.length) {
         // Interpolate the exact beam-break time rather than snapping to the timestep.
+        // The car is only *timed* here; it carries on rolling into the run-out.
         const span = after - before
         const frac = span > 1e-9 ? (track.length - before) / span : 0
         const exact = time + frac * PHYSICS_DT
@@ -184,6 +193,13 @@ export function simulateRace(entries: RaceEntry[], options: SimulateOptions): Ra
         state.finishSpeed = state.v
         finishedCount++
         finishOrder.push({ index: i, elapsed: exact, speed: state.v })
+      }
+
+      // Backstop at the end of the run-out, so nothing rolls off the trestle.
+      const endOfTrack = track.length + track.runoutLength
+      if (after >= endOfTrack) {
+        state.s = endOfTrack - config.analysis.noseOffset
+        state.v = 0
       }
     }
 

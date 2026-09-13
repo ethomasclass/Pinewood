@@ -104,8 +104,10 @@ function CarActor({
   return <CarMesh build={build} groupRef={groupRef} wheelRefs={wheelRefs} />
 }
 
-/** How long after the last car finishes before the results board comes up. */
-const RESULTS_DELAY = 1.4
+/** How long after the last car is timed before the results board comes up. Long
+ *  enough to watch the field roll into the catch section, short enough not to wait
+ *  on the slowest car rolling to a complete stop. */
+const RESULTS_DELAY = 1.8
 
 function DirectorLoop({
   race,
@@ -122,6 +124,13 @@ function DirectorLoop({
   const scratch = useRef({ target: new THREE.Vector3() })
   const previousAngle = useRef<CameraAngleId | null>(null)
   const finished = useRef(false)
+
+  /** When the last car breaks the beam. The recording runs on past this while the
+   *  field coasts to a stop, so the results board keys off the timing, not the tape. */
+  const lastFinishAt = useMemo(() => {
+    const times = race.results.map((r) => r.elapsed).filter((t) => Number.isFinite(t))
+    return times.length > 0 ? Math.max(...times) : race.recording.duration
+  }, [race])
 
   const director = useMemo(() => new AutoCamDirector(), [])
   const commentary = useMemo(
@@ -244,7 +253,7 @@ function DirectorLoop({
 
     // --- Hand over to the results board once the race is done and any automatic
     //     replay has played out. ---
-    if (!finished.current && !replay && playback.time > recordingDuration + RESULTS_DELAY) {
+    if (!finished.current && !replay && playback.time > lastFinishAt + RESULTS_DELAY) {
       finished.current = true
       useStore.getState().finishHeat()
     }

@@ -44,6 +44,20 @@ export function Track({
     return out
   }, [track, spec.laneCount, spec.laneSpacing, sEnd])
 
+  // Carpet and foam past the finish line: this is what actually stops the cars, and
+  // seeing it makes the run-out read as part of the track rather than empty deck.
+  const catchPad = useMemo(
+    () =>
+      extrudeAlongTrack(
+        track,
+        rectSection(0, halfWidth * 2 - 0.01, 0.0008, 0.004),
+        spec.length + spec.brakeStart,
+        sEnd - 0.06,
+        0.12,
+      ),
+    [track, halfWidth, spec.length, spec.brakeStart, sEnd],
+  )
+
   const legs = useMemo(() => {
     const out: Array<{ position: [number, number, number]; height: number }> = []
     for (let s = 0.2; s < sEnd; s += 1.5) {
@@ -55,6 +69,7 @@ export function Track({
   }, [track, sEnd])
 
   const finishPoint = track.pointAt(spec.length)
+  const endPoint = track.pointAt(sEnd)
   const startPoint = track.pointAt(0)
   const startSlope = track.slopeAt(0)
 
@@ -73,6 +88,18 @@ export function Track({
           <meshStandardMaterial color="#5c6472" roughness={0.9} />
         </mesh>
       ))}
+
+      <mesh geometry={catchPad} receiveShadow>
+        <meshStandardMaterial color="#3f4654" roughness={0.98} />
+      </mesh>
+
+      {/* Backstop at the end of the run-out. */}
+      <group position={[endPoint.x, endPoint.y, 0]}>
+        <mesh position={[0.04, 0.05, 0]} castShadow>
+          <boxGeometry args={[0.07, 0.1, halfWidth * 2]} />
+          <meshStandardMaterial color="#c1553f" roughness={0.95} />
+        </mesh>
+      </group>
 
       {/* Trestle legs. Somebody's dad built these. */}
       {legs.map((leg, i) => (

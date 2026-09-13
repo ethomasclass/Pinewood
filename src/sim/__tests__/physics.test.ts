@@ -179,6 +179,51 @@ describe('archetypes', () => {
   })
 })
 
+describe('the run-out', () => {
+  const field = () => generateField(5, 31).map((build, lane) => ({ lane, build }))
+
+  it('keeps cars rolling after the beam instead of freezing them on the line', () => {
+    const race = simulateRace(field(), { seed: 3 })
+    const winner = race.results.find((r) => r.position === 1)!
+    const index = race.entries.findIndex((e) => e.lane === winner.lane)
+
+    const atFinish = sampleRecording(race.recording, winner.elapsed)[index]
+    const later = sampleRecording(race.recording, winner.elapsed + 0.25)[index]
+
+    expect(atFinish.s).toBeGreaterThanOrEqual(DEFAULT_TRACK.length - 0.02)
+    // Still travelling a quarter second after being timed, and further down the track.
+    expect(later.s).toBeGreaterThan(atFinish.s + 0.2)
+    expect(later.v).toBeGreaterThan(1)
+  })
+
+  it('records past the last finish so the roll-out is on tape', () => {
+    const race = simulateRace(field(), { seed: 3 })
+    const lastFinish = Math.max(...race.results.map((r) => r.elapsed).filter(Number.isFinite))
+    expect(race.recording.duration).toBeGreaterThan(lastFinish + 0.3)
+  })
+
+  it('brings every car to rest in the catch section', () => {
+    const race = simulateRace(field(), { seed: 3 })
+    const final = sampleRecording(race.recording, race.recording.duration)
+    for (const frame of final) {
+      expect(frame.v).toBeLessThan(0.1)
+      // Past the line, and stopped before the end of the run-out.
+      expect(frame.s).toBeGreaterThan(DEFAULT_TRACK.length)
+      expect(frame.s).toBeLessThanOrEqual(DEFAULT_TRACK.length + DEFAULT_TRACK.runoutLength + 0.01)
+    }
+  })
+
+  it('does not let the braking pad affect the timed part of the race', () => {
+    // The pad starts past the line, so it must not touch the recorded time at all.
+    const race = simulateRace(field(), { seed: 3 })
+    const slow = simulateRace(field(), {
+      seed: 3,
+      track: { ...DEFAULT_TRACK, brakeStart: DEFAULT_TRACK.brakeStart + 1.2 },
+    })
+    expect(race.results.map((r) => r.elapsed)).toEqual(slow.results.map((r) => r.elapsed))
+  })
+})
+
 describe('recording', () => {
   it('records frames that reach the finish line and interpolate cleanly', () => {
     const builds = generateField(4, 11)

@@ -52,18 +52,24 @@ that includes four wheels you cannot carve away, wheel spin-up inertia, front-ax
 unloading and wheelies, and guide-rail contact where light sustained contact is
 cheap (deliberate rail riding) but a hard hit is expensive.
 
-Calibrated against a 32 ft track with a 44 in drop at 26 degrees. A mid-pack car
-runs about **2.81 s**; a well-built one about **2.78 s**. What a second of build
-time is worth, measured:
+Cars are *timed* at the finish beam but are not stopped by it: they carry on over
+the line, coast across the run-out, and are brought to rest by a braking catch
+section of carpet and foam, with a backstop at the end of the trestle. The
+braking pad starts past the line so it can never touch a recorded time - there is
+a test pinning that.
+
+Calibrated against a 42 ft track with a 48 in drop at 26 degrees, plus an 11 ft
+run-out. A mid-pack car runs about **3.46 s**; a well-built one about **3.41 s**.
+What a second of build time is worth, measured:
 
 | Lever | Range tested | Time |
 | --- | --- | --- |
-| Axle alignment | 0.02° → 0.50° error | **0.199 s** |
-| Axle prep (polish + lube) | rough → mirror | **0.136 s** |
-| Total mass | 3 oz → 5 oz | **0.078 s** |
-| Body shape | block → low plank | **0.048 s** |
-| Centre-of-mass height | 0.15 in → 1.0 in | **0.023 s** |
-| Ballast fore/aft | 2 in → 5.4 in from nose | **0.017 s** |
+| Axle alignment | 0.02° → 0.50° error | **0.369 s** |
+| Axle prep (polish + lube) | rough → mirror | **0.211 s** |
+| Total mass | 3 oz → 5 oz | **0.117 s** |
+| Body shape | block → low plank | **0.085 s** |
+| Centre-of-mass height | 0.15 in → 1.0 in | **0.043 s** |
+| Ballast fore/aft | 2 in → 5.4 in from nose | **0.022 s** |
 
 ### One honest deviation from the brief
 
@@ -73,7 +79,7 @@ into a plank removes real frontal area, and at 0.048 s that beats moving the
 ballast (0.017 s). The order it *does* produce still supports the pillar, for a
 better reason:
 
-- Axle work (alignment + prep) is worth **0.34 s** combined and dwarfs everything.
+- Axle work (alignment + prep) is worth **0.58 s** combined and dwarfs everything.
 - Shape is worth more than ballast position, but it is a *one-time, obvious*
   decision - carve a wedge, done. It is not skill-expressive.
 - Weight placement and axle tuning are continuous, non-obvious, and testable,
@@ -91,7 +97,8 @@ If you want the doc's hierarchy enforced anyway, the aero term is one number:
 
 ```
 src/sim/         Renderer-free, headless, fully tested
-  track.ts       Geometry as functions of arc length (ramp behind the start line)
+  track.ts       Geometry as functions of arc length (ramp behind the start line,
+                 braking catch section past the finish)
   physics.ts     Fixed-step integrator, longitudinal truth + lateral drift
   build.ts       Chassis -> mass, centre of mass, inertia, drag area, friction
   race.ts        Orchestrator -> results + 120 Hz recording + event stream

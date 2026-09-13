@@ -29,6 +29,10 @@ export interface TrackGeometry {
   pointAt(s: number): { x: number; y: number }
   /** Lateral offset of the centre of lane index i from the track centreline. */
   laneOffset(lane: number): number
+  /** Extra rolling resistance from the braking pad past the finish, 0 on the track. */
+  brakingAt(s: number): number
+  /** Where the braking pad begins, in arc length. */
+  brakeStartS: number
   totalPathLength: number
 }
 
@@ -90,11 +94,23 @@ export function buildTrackGeometry(spec: TrackSpec): TrackGeometry {
     return centred * spec.laneSpacing
   }
 
+  // The catch section: carpet and foam past the finish line. Friction ramps in over
+  // a short distance rather than switching on, so cars settle rather than stopping
+  // dead the instant a wheel touches it.
+  const brakeStartS = spec.length + spec.brakeStart
+  const rampIn = 0.35
+  const brakingAt = (s: number): number => {
+    if (s <= brakeStartS) return 0
+    return 0.85 * Math.min(1, (s - brakeStartS) / rampIn)
+  }
+
   return {
     spec,
     rampAngle,
     transitionStart,
     transitionEnd,
+    brakingAt,
+    brakeStartS,
     heightAt,
     slopeAt,
     slopeGradientAt,

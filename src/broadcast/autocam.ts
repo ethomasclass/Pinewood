@@ -102,6 +102,12 @@ export class AutoCamDirector {
           reason: `Lead change to lane ${event.lane + 1}`,
         })
         break
+      case 'race-finish':
+        // The timing is done; release the finish lock and go wide so the viewer sees
+        // the field roll out rather than staring at an empty line.
+        this.lockedToFinish = false
+        this.request({ angle: 'overhead', priority: 9, expires: event.t + 2.5, reason: 'Field rolls out' })
+        break
       case 'rail-contact':
         if (event.severity > 0.45) {
           this.request({

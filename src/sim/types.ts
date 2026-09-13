@@ -111,19 +111,23 @@ export interface TrackSpec {
   /** Half-gap between the centre guide rail and a wheel at rest, metres.
    *  This is the lateral slop the car has before it touches the rail. */
   railClearance: number
-  /** Run-out beyond the finish line before the catch, metres. */
+  /** Run-out beyond the finish line before the track ends, metres. */
   runoutLength: number
+  /** How far past the finish line the braking pad starts, metres. Cars coast over
+   *  the line and across this gap before the catch section slows them down. */
+  brakeStart: number
 }
 
 export const DEFAULT_TRACK: TrackSpec = {
   laneCount: 6,
   laneSpacing: inches(4),
-  length: 9.75, // 32 ft
-  startHeight: 1.118, // 44 in
+  length: 12.8, // 42 ft
+  startHeight: 1.22, // 48 in
   rampAngleDeg: 26,
   transitionRadius: 1.6,
   railClearance: inches(0.22),
-  runoutLength: 2.4,
+  runoutLength: 3.4,
+  brakeStart: 0.95,
 }
 
 export const STOCK_WHEELS: WheelSetup = {

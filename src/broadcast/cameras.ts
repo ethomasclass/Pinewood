@@ -80,7 +80,9 @@ export interface Shot {
 }
 
 const Y_UP = new THREE.Vector3(0, 1, 0)
-const Z_UP = new THREE.Vector3(0, 0, 1)
+/** Looking straight down, this puts down-track to the right of frame and lane 1 at
+ *  the top -- matching every other angle, so a cut to overhead never reads mirrored. */
+const OVERHEAD_UP = new THREE.Vector3(0, 0, -1)
 
 /** World position of a car's nose, offset above the deck. */
 function carPoint(ctx: ShotContext, index: number, lift = 0.03): THREE.Vector3 {
@@ -166,7 +168,7 @@ export function computeShot(angle: CameraAngleId, ctx: ShotContext): Shot {
         position: new THREE.Vector3(centre.x + 0.35, centre.y + Math.max(1.4, height), 0),
         target: new THREE.Vector3(centre.x + 0.35, centre.y, 0),
         fov: 50,
-        up: Z_UP,
+        up: OVERHEAD_UP,
         smoothing: 8,
       }
     }
