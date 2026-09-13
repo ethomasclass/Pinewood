@@ -5,6 +5,7 @@ import { buildTrackGeometry } from '../../sim/track'
 import { cloneProfile, presetById } from '../../sim/presets'
 import { DEFAULT_TRACK, STOCK_WHEELBASE, type CarBuild } from '../../sim/types'
 import { RULES, WHEEL } from '../../sim/units'
+import { AXLE_LOCAL_Y, RIDE_HEIGHT } from '../../sim/build'
 import type { CarFrame } from '../../sim/race'
 
 const build: CarBuild = {
@@ -42,8 +43,8 @@ describe('car placement', () => {
   it('puts the nose ahead of the tail, down-track', () => {
     const object = new THREE.Object3D()
     placeCar(track, build, frameAt(6), 0, object)
-    const nose = worldPoint(object, new THREE.Vector3(0, WHEEL.radius, 0))
-    const tail = worldPoint(object, new THREE.Vector3(RULES.maxLength, WHEEL.radius, 0))
+    const nose = worldPoint(object, new THREE.Vector3(0, AXLE_LOCAL_Y, 0))
+    const tail = worldPoint(object, new THREE.Vector3(RULES.maxLength, AXLE_LOCAL_Y, 0))
     // The track runs toward +x, so a car facing the right way has its nose at greater x.
     expect(nose.x).toBeGreaterThan(tail.x)
   })
@@ -59,7 +60,7 @@ describe('car placement', () => {
     const object = new THREE.Object3D()
     const s = 7
     placeCar(track, build, frameAt(s), 0, object)
-    const nose = worldPoint(object, new THREE.Vector3(0, WHEEL.radius, 0))
+    const nose = worldPoint(object, new THREE.Vector3(0, AXLE_LOCAL_Y, 0))
     // Past the transition the track is flat, so arc length and world x coincide.
     expect(nose.x).toBeCloseTo(track.pointAt(s).x, 2)
   })
@@ -67,7 +68,7 @@ describe('car placement', () => {
   it('sits the wheels on the track surface on the ramp', () => {
     const object = new THREE.Object3D()
     placeCar(track, build, frameAt(1.2), 0, object)
-    const rearHub = worldPoint(object, new THREE.Vector3(build.wheelbase.rearX, WHEEL.radius, 0))
+    const rearHub = worldPoint(object, new THREE.Vector3(build.wheelbase.rearX, AXLE_LOCAL_Y, 0))
     const sRear = 1.2 - build.wheelbase.rearX
     const surface = track.pointAt(sRear)
     const slope = track.slopeAt(sRear)
@@ -75,11 +76,30 @@ describe('car placement', () => {
     expect(rearHub.y).toBeCloseTo(surface.y + Math.cos(slope) * WHEEL.radius, 4)
   })
 
+  it('rides clear of the lane guide rail instead of sitting on it', () => {
+    const object = new THREE.Object3D()
+    placeCar(track, build, frameAt(7), 0, object)
+
+    // Underside of the block, at both ends.
+    const noseFloor = worldPoint(object, new THREE.Vector3(0, 0, 0))
+    const tailFloor = worldPoint(object, new THREE.Vector3(RULES.maxLength, 0, 0))
+    const deck = track.pointAt(7).y
+
+    for (const point of [noseFloor, tailFloor]) {
+      expect(point.y - deck).toBeGreaterThanOrEqual(RIDE_HEIGHT - 1e-6)
+    }
+
+    // And the wheels still reach the deck: clearance must come from the body sitting
+    // higher, never from the whole car floating.
+    const hub = worldPoint(object, new THREE.Vector3(build.wheelbase.rearX, AXLE_LOCAL_Y, 0))
+    expect(hub.y - deck).toBeCloseTo(WHEEL.radius, 5)
+  })
+
   it('points the nose the same way the car is drifting', () => {
     const object = new THREE.Object3D()
     placeCar(track, build, frameAt(6, 0.2), 0, object)
-    const nose = worldPoint(object, new THREE.Vector3(0, WHEEL.radius, 0))
-    const tail = worldPoint(object, new THREE.Vector3(RULES.maxLength, WHEEL.radius, 0))
+    const nose = worldPoint(object, new THREE.Vector3(0, AXLE_LOCAL_Y, 0))
+    const tail = worldPoint(object, new THREE.Vector3(RULES.maxLength, AXLE_LOCAL_Y, 0))
     // Positive yaw moves the car toward +z, so the nose must lead toward +z too.
     expect(nose.z).toBeGreaterThan(tail.z)
   })

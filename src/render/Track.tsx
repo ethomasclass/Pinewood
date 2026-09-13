@@ -2,7 +2,8 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 import { extrudeAlongTrack, rectSection } from './geometry'
 import type { TrackGeometry } from '../sim/track'
-import { inches } from '../sim/units'
+import { WHEEL, inches } from '../sim/units'
+import { AXLE_HALF_TRACK, RIDE_HEIGHT } from '../sim/build'
 
 /**
  * The track, swept along the exact curve the physics integrates. Rendering and
@@ -25,15 +26,22 @@ export function Track({
     [track, halfWidth, sEnd],
   )
 
+  // The centre guide rail the cars straddle. Its width is derived, not picked: the
+  // edge lands exactly where the simulation says the inside of a wheel touches it,
+  // so what you see a car do and what the physics charges it for are the same event.
+  // Its height stays under the ride height, so the block clears it.
+  const railWidth = 2 * (AXLE_HALF_TRACK - WHEEL.width / 2 - spec.railClearance)
+  const railHeight = Math.min(inches(0.26), RIDE_HEIGHT * 0.72)
+
   const rails = useMemo(() => {
     const out: THREE.BufferGeometry[] = []
     for (let lane = 0; lane < spec.laneCount; lane++) {
       out.push(
-        extrudeAlongTrack(track, rectSection(track.laneOffset(lane), inches(0.5), 0, inches(0.28)), sStart, sEnd, 0.06),
+        extrudeAlongTrack(track, rectSection(track.laneOffset(lane), railWidth, 0, railHeight), sStart, sEnd, 0.06),
       )
     }
     return out
-  }, [track, spec.laneCount, sEnd])
+  }, [track, spec.laneCount, sEnd, railWidth, railHeight])
 
   const dividers = useMemo(() => {
     const out: THREE.BufferGeometry[] = []

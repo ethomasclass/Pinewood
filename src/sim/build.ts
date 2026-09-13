@@ -53,7 +53,7 @@ export interface MassProperties {
   massKg: number
   /** Metres from the nose. */
   comX: number
-  /** Metres above the underside datum. */
+  /** Metres above the underside of the block. This is what a builder measures. */
   comY: number
   /** Metres from the centreline, positive to the right. */
   comZ: number
@@ -73,6 +73,13 @@ export interface BuildAnalysis {
   com: MassProperties
   /** Centre of mass as a fraction of wheelbase: 0 at the front axle, 1 at the rear. */
   comBalance: number
+  /**
+   * Centre-of-mass height above the track surface, metres. Every physical use of
+   * height -- the energy spent lifting the car level through the transition, weight
+   * transfer, and how hard it rocks over a rail contact -- is measured from the
+   * contact patch, not from the underside of the block.
+   */
+  comHeightAboveTrack: number
   /** Signed distance from the centre of mass to the rear axle, metres. Positive is ahead. */
   comAheadOfRearAxle: number
   frontalArea: number
@@ -97,6 +104,18 @@ export interface BuildWarning {
 
 /** Wheels sit just outboard of the body; this is the axle half-track. */
 export const AXLE_HALF_TRACK = inches(1.05)
+
+/**
+ * How far the underside of the block rides above the track surface. The rules set a
+ * minimum for a reason: the centre guide rail runs down the middle of every lane, and
+ * a car with no clearance sits on the rail instead of straddling it.
+ *
+ * The car's local space measures y from the underside of the block, so the axle sits
+ * BELOW wheel-radius height in that frame -- the wheels hang down past the body.
+ */
+export const RIDE_HEIGHT = RULES.minClearance
+/** Axle centre height in the body's local frame. */
+export const AXLE_LOCAL_Y = WHEEL.radius - RIDE_HEIGHT
 
 export function analyzeBuild(build: CarBuild): BuildAnalysis {
   const stations = sampleStations(build.profile)
@@ -134,10 +153,10 @@ export function analyzeBuild(build: CarBuild): BuildAnalysis {
   const contactingWheels = build.wheels.raisedFrontWheel ? 3 : 4
   const wheelMass = build.wheels.massEach * 4
   const wheelPositions: Array<{ x: number; y: number; z: number }> = [
-    { x: build.wheelbase.frontX, y: WHEEL.radius, z: -AXLE_HALF_TRACK },
-    { x: build.wheelbase.frontX, y: WHEEL.radius, z: AXLE_HALF_TRACK },
-    { x: build.wheelbase.rearX, y: WHEEL.radius, z: -AXLE_HALF_TRACK },
-    { x: build.wheelbase.rearX, y: WHEEL.radius, z: AXLE_HALF_TRACK },
+    { x: build.wheelbase.frontX, y: AXLE_LOCAL_Y, z: -AXLE_HALF_TRACK },
+    { x: build.wheelbase.frontX, y: AXLE_LOCAL_Y, z: AXLE_HALF_TRACK },
+    { x: build.wheelbase.rearX, y: AXLE_LOCAL_Y, z: -AXLE_HALF_TRACK },
+    { x: build.wheelbase.rearX, y: AXLE_LOCAL_Y, z: AXLE_HALF_TRACK },
   ]
   for (const p of wheelPositions) {
     totalMass += build.wheels.massEach
@@ -221,6 +240,7 @@ export function analyzeBuild(build: CarBuild): BuildAnalysis {
     effectiveMass,
     com: { massKg: totalMass, comX, comY, comZ, yawInertia },
     comBalance,
+    comHeightAboveTrack: comY + RIDE_HEIGHT,
     comAheadOfRearAxle,
     frontalArea,
     dragCoefficient,

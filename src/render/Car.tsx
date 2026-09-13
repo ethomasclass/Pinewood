@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { buildChassisGeometry } from './geometry'
 import { createLiveryTexture, finishMaterialProps } from './livery'
-import { AXLE_HALF_TRACK } from '../sim/build'
+import { AXLE_HALF_TRACK, AXLE_LOCAL_Y } from '../sim/build'
 import { WHEEL } from '../sim/units'
 import type { TrackGeometry } from '../sim/track'
 import type { CarBuild } from '../sim/types'
@@ -43,7 +43,9 @@ export function placeCar(
   target.rotation.set(0, Math.PI - frame.yaw, -pitch)
 
   // Pin the car by its rear axle: map the local rear-axle point onto the track's.
-  const offset = new THREE.Vector3(build.wheelbase.rearX, WHEEL.radius, 0).applyEuler(target.rotation)
+  // The axle sits below wheel-radius height in the body frame, which is what leaves
+  // the block riding clear of the lane's centre guide rail.
+  const offset = new THREE.Vector3(build.wheelbase.rearX, AXLE_LOCAL_Y, 0).applyEuler(target.rotation)
   target.position.set(rear.x - offset.x, rear.y - offset.y, laneOffset + frame.y - offset.z)
 }
 
@@ -92,10 +94,10 @@ export function CarMesh({
   const wheels = useMemo(() => {
     const lift = build.wheels.raisedFrontWheel ? 0.0022 : 0
     return [
-      { x: build.wheelbase.frontX, z: -AXLE_HALF_TRACK, y: WHEEL.radius + lift },
-      { x: build.wheelbase.frontX, z: AXLE_HALF_TRACK, y: WHEEL.radius },
-      { x: build.wheelbase.rearX, z: -AXLE_HALF_TRACK, y: WHEEL.radius },
-      { x: build.wheelbase.rearX, z: AXLE_HALF_TRACK, y: WHEEL.radius },
+      { x: build.wheelbase.frontX, z: -AXLE_HALF_TRACK, y: AXLE_LOCAL_Y + lift },
+      { x: build.wheelbase.frontX, z: AXLE_HALF_TRACK, y: AXLE_LOCAL_Y },
+      { x: build.wheelbase.rearX, z: -AXLE_HALF_TRACK, y: AXLE_LOCAL_Y },
+      { x: build.wheelbase.rearX, z: AXLE_HALF_TRACK, y: AXLE_LOCAL_Y },
     ]
   }, [build.wheelbase, build.wheels.raisedFrontWheel])
 

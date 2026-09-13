@@ -131,7 +131,7 @@ export function stepCar(
   // --- Gravity along the path. The second term is the cost of raising a tall car's
   //     centre of mass as the body rotates from ramp angle to flat. It is small,
   //     negative through the transition, and proportional to centre-of-mass height. ---
-  const gravityForce = m * G * Math.sin(slope) * (1 + a.com.comY * slopeGradient)
+  const gravityForce = m * G * Math.sin(slope) * (1 + a.comHeightAboveTrack * slopeGradient)
 
   // --- Axle-bore friction, the dominant loss, plus the braking pad once the car is
   //     past the finish line and into the catch section. ---
@@ -147,7 +147,7 @@ export function stepCar(
   const staticFrontLoad = (normalForce * a.comAheadOfRearAxle) / wheelbase
   const pendingAccel = (gravityForce - frictionForce - dragForce) / mEff
   // Accelerating downhill transfers load rearward, unloading the front further.
-  const frontLoad = staticFrontLoad - (m * pendingAccel * a.com.comY) / wheelbase
+  const frontLoad = staticFrontLoad - (m * pendingAccel * a.comHeightAboveTrack) / wheelbase
   const wheelie = frontLoad <= 0
   if (wheelie && !state.wheelie) state.wheelie = true
   if (!wheelie && state.wheelie) state.wheelie = false
@@ -198,7 +198,7 @@ export function stepCar(
     // nudge costs more energy and throws the car further off line. This is where
     // centre-of-mass height earns its place as a real build decision: the direct
     // energy penalty of a high build is small, but its instability is not.
-    const rockFactor = 1 + a.com.comY * 22
+    const rockFactor = 1 + a.comHeightAboveTrack * 22
 
     const approachSpeed = Math.abs(vPrev * Math.sin(state.yaw))
     const closing = Math.sign(state.yaw) === side && approachSpeed > 0.012

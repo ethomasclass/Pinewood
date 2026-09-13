@@ -324,7 +324,7 @@ function buildConfig(
       build.axles.alignmentErrorDeg * deg * errorSign * (1 + run.jitter(0.2 * variance)),
     wheelbase: Math.max(0.02, build.wheelbase.rearX - build.wheelbase.frontX),
     wobbleAmplitude:
-      (1 - build.wheels.trueness) * 0.0055 * (1 + analysis.com.comY * 26) * (1 + run.jitter(0.2 * variance)),
+      (1 - build.wheels.trueness) * 0.0055 * (1 + analysis.comHeightAboveTrack * 26) * (1 + run.jitter(0.2 * variance)),
     wobblePhase: car.range(0, Math.PI * 2),
     frictionVariance: 1 + run.jitter(0.035 * variance),
     dragVariance: 1 + run.jitter(0.02 * variance),

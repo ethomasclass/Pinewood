@@ -46,6 +46,13 @@ fall out of the geometry on their own:
   centre of mass, spending energy a low car never spends. A tall car also rocks
   harder over any rail contact, so height costs consistency as well as time.
 
+The block also rides the regulation 3/8 in clear of the deck, so it straddles the
+lane's centre guide rail rather than sitting on it, and every physical use of
+centre-of-mass height is measured from the contact patch rather than from the
+underside of the block. The rendered rail's width is derived from the same
+clearance the simulation uses, so the edge you see a wheel touch is the contact
+the physics charges for.
+
 Also modelled: axle-bore friction (via the axle-radius to wheel-radius ratio,
 which is what makes it the dominant loss), aerodynamic drag against a frontal area
 that includes four wheels you cannot carve away, wheel spin-up inertia, front-axle
@@ -59,12 +66,12 @@ braking pad starts past the line so it can never touch a recorded time - there i
 a test pinning that.
 
 Calibrated against a 42 ft track with a 48 in drop at 26 degrees, plus an 11 ft
-run-out. A mid-pack car runs about **3.46 s**; a well-built one about **3.41 s**.
+run-out. A mid-pack car runs about **3.46 s**; a well-built one about **3.42 s**.
 What a second of build time is worth, measured:
 
 | Lever | Range tested | Time |
 | --- | --- | --- |
-| Axle alignment | 0.02° → 0.50° error | **0.369 s** |
+| Axle alignment | 0.02° → 0.50° error | **0.437 s** |
 | Axle prep (polish + lube) | rough → mirror | **0.211 s** |
 | Total mass | 3 oz → 5 oz | **0.117 s** |
 | Body shape | block → low plank | **0.085 s** |
@@ -79,7 +86,7 @@ into a plank removes real frontal area, and at 0.048 s that beats moving the
 ballast (0.017 s). The order it *does* produce still supports the pillar, for a
 better reason:
 
-- Axle work (alignment + prep) is worth **0.58 s** combined and dwarfs everything.
+- Axle work (alignment + prep) is worth **0.65 s** combined and dwarfs everything.
 - Shape is worth more than ballast position, but it is a *one-time, obvious*
   decision - carve a wedge, done. It is not skill-expressive.
 - Weight placement and axle tuning are continuous, non-obvious, and testable,
