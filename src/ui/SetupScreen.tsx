@@ -30,6 +30,36 @@ export function SetupScreen() {
         </div>
 
         <div className="card">
+          <h2>DIRECTING</h2>
+          <p className="hint">
+            You are not driving, you are cutting the broadcast. Auto-cam directs by default;
+            pressing an angle steals one shot and hands control back a moment later.
+          </p>
+          <div className="keygrid">
+            {[
+              ['1', 'Starting gate'],
+              ['2', 'Ramp'],
+              ['3', 'Finish line'],
+              ['4', 'Overhead'],
+              ['5', 'Free cam'],
+              ['6+', 'Lane chase'],
+              ['A', 'Auto-cam'],
+              ['R', 'Replay'],
+              ['S', 'Slow motion'],
+              ['C', 'Mark clip'],
+            ].map(([key, label]) => (
+              <span className="keyrow" key={key}>
+                <kbd>{key}</kbd>
+                {label}
+              </span>
+            ))}
+          </div>
+          <p className="hint" style={{ margin: '10px 0 0' }}>
+            Every key has a button along the bottom, so a thumb works as well as a keyboard.
+          </p>
+        </div>
+
+        <div className="card">
           <h2>FIELD SIZE</h2>
           <p className="hint">Lanes on the track. Bigger fields mean more to watch and harder cuts.</p>
           <div className="chiprow">
