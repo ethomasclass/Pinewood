@@ -263,7 +263,9 @@ export function simulateRace(entries: RaceEntry[], options: SimulateOptions): Ra
     const contenders = finishOrder
       .filter((f) => f.elapsed - finishOrder[0].elapsed <= PHOTO_FINISH_THRESHOLD)
       .map((f) => entries[f.index].lane)
-    events.push({ t: lastFinish, type: 'photo-finish', lanes: contenders, margin })
+    // The result is known the instant the second car crosses; waiting for the back of
+    // the field would leave the broadcast sitting on a dead track.
+    events.push({ t: finishOrder[1].elapsed + 0.01, type: 'photo-finish', lanes: contenders, margin })
   }
 
   events.sort((a, b) => a.t - b.t)
@@ -358,7 +360,9 @@ function standingOf(index: number, states: CarState[], configs: CarPhysicsConfig
   let position = 1
   for (let i = 0; i < states.length; i++) {
     if (i === index) continue
-    if (effectiveProgress(states[i], configs[i]) > mine) position++
+    const theirs = effectiveProgress(states[i], configs[i])
+    // Lane order breaks exact ties, so the grid reads 1-2-3 rather than six firsts.
+    if (theirs > mine || (theirs === mine && i < index)) position++
   }
   return position
 }

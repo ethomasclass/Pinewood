@@ -117,7 +117,7 @@ export interface TrackSpec {
 
 export const DEFAULT_TRACK: TrackSpec = {
   laneCount: 6,
-  laneSpacing: inches(7.5),
+  laneSpacing: inches(4),
   length: 9.75, // 32 ft
   startHeight: 1.118, // 44 in
   rampAngleDeg: 26,

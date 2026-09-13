@@ -30,8 +30,8 @@ export const PROFILE_PRESETS: ProfilePreset[] = [
     blurb: 'The shape that wins pack races. Low nose, full tail for weight.',
     profile: {
       side: [
-        { x: 0, v: 0.06 },
-        { x: 0.28, v: 0.3 },
+        { x: 0, v: 0.11 },
+        { x: 0.28, v: 0.32 },
         { x: 0.62, v: 0.62 },
         { x: 1, v: 0.92 },
       ],
@@ -48,8 +48,8 @@ export const PROFILE_PRESETS: ProfilePreset[] = [
     blurb: 'Long, thin, low. Minimal frontal area with the mass pushed rearward.',
     profile: {
       side: [
-        { x: 0, v: 0.05 },
-        { x: 0.5, v: 0.16 },
+        { x: 0, v: 0.12 },
+        { x: 0.5, v: 0.2 },
         { x: 0.74, v: 0.24 },
         { x: 0.82, v: 0.78 },
         { x: 1, v: 0.86 },
@@ -91,15 +91,15 @@ export const PROFILE_PRESETS: ProfilePreset[] = [
     blurb: 'Knife nose in plan view. Narrow up front, broad shoulders at the back.',
     profile: {
       side: [
-        { x: 0, v: 0.1 },
-        { x: 0.4, v: 0.26 },
-        { x: 0.7, v: 0.5 },
-        { x: 1, v: 0.72 },
+        { x: 0, v: 0.14 },
+        { x: 0.4, v: 0.3 },
+        { x: 0.7, v: 0.54 },
+        { x: 1, v: 0.74 },
       ],
       top: [
-        { x: 0, v: 0.1 },
-        { x: 0.35, v: 0.52 },
-        { x: 0.72, v: 0.94 },
+        { x: 0, v: 0.3 },
+        { x: 0.35, v: 0.66 },
+        { x: 0.72, v: 0.95 },
         { x: 1, v: 1 },
       ],
     },
@@ -110,8 +110,8 @@ export const PROFILE_PRESETS: ProfilePreset[] = [
     blurb: 'Almost nothing above the axles. All the mass has to go somewhere low.',
     profile: {
       side: [
-        { x: 0, v: 0.08 },
-        { x: 0.2, v: 0.22 },
+        { x: 0, v: 0.13 },
+        { x: 0.2, v: 0.24 },
         { x: 0.8, v: 0.24 },
         { x: 1, v: 0.2 },
       ],

@@ -87,10 +87,15 @@ export function ballastToWeight(
 
 const clampX = (x: number) => Math.min(RULES.maxLength - inches(0.2), Math.max(inches(0.2), x))
 
-export function generateBotCar(archetype: BotArchetype, seed: number, index: number): CarBuild {
+export function generateBotCar(
+  archetype: BotArchetype,
+  seed: number,
+  index: number,
+  taken?: Set<string>,
+): CarBuild {
   const rng = new Rng(seed)
   const paint = randomPaint(rng, archetype)
-  const name = rng.pick(NAMES[archetype])
+  const name = pickName(rng, archetype, taken)
 
   let build: CarBuild
   switch (archetype) {
@@ -114,6 +119,16 @@ export function generateBotCar(archetype: BotArchetype, seed: number, index: num
   build.archetype = archetype
   build.createdAt = Date.now()
   return build
+}
+
+/** Two cars called "Silver Bullet" in one field makes the ticker unreadable. */
+function pickName(rng: Rng, archetype: BotArchetype, taken?: Set<string>): string {
+  const pool = NAMES[archetype]
+  if (!taken) return rng.pick(pool)
+  const free = pool.filter((n) => !taken.has(n))
+  const chosen = free.length > 0 ? rng.pick(free) : `${rng.pick(pool)} II`
+  taken.add(chosen)
+  return chosen
 }
 
 function tagFor(name: string, index: number): string {
@@ -283,10 +298,11 @@ export const ALL_ARCHETYPES: BotArchetype[] = ['speed-demon', 'balanced', 'wildc
 /** Builds a field with a spread of archetypes, so a broadcast has someone to root for. */
 export function generateField(count: number, seed: number, mix?: BotArchetype[]): CarBuild[] {
   const rng = new Rng(seed)
+  const taken = new Set<string>()
   const out: CarBuild[] = []
   for (let i = 0; i < count; i++) {
     const archetype = mix && mix[i] ? mix[i] : defaultMix(i, rng)
-    out.push(generateBotCar(archetype, (seed + i * 7919) >>> 0, i))
+    out.push(generateBotCar(archetype, (seed + i * 7919) >>> 0, i, taken))
   }
   return out
 }
