@@ -59,7 +59,8 @@ export function Switcher() {
       const target = event.target as HTMLElement | null
       if (target && /input|textarea|select/i.test(target.tagName)) return
 
-      const fixed = FIXED_ANGLES.find((a) => a.hotkey === event.key)
+      const key = event.key.toLowerCase()
+      const fixed = FIXED_ANGLES.find((a) => a.hotkey.toLowerCase() === key)
       if (fixed) {
         takeAngle(fixed.id)
         return
@@ -72,7 +73,7 @@ export function Switcher() {
         }
       }
 
-      switch (event.key.toLowerCase()) {
+      switch (key) {
         case 'a':
           useStore.getState().toggleAutoCam()
           break

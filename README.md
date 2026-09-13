@@ -15,23 +15,35 @@ Desktop and touch are both first-class. Every hotkey has a button.
 
 ## Directing
 
+Numbers are lanes - `3` chases the car in lane 3, which is the only mapping worth
+having to remember. Letters are the fixed angles:
+
 | Key | Shot | |
 | --- | --- | --- |
-| `1` | Starting Gate | tight on the pin drop |
-| `2` | Ramp | side-on through the descent |
-| `3` | Finish Line | locked across the lanes, doubles as the photo finish |
-| `4` | Overhead | best read of the gaps |
-| `5` | Free Cam | drag to orbit, wheel or pinch to dolly |
-| `6`+ | Lane cams | chase cam per car |
+| `1`-`8` | Lane chase | follows that lane's car |
+| `G` | Starting Gate | tight on the pin drop |
+| `D` | Ramp | side-on through the descent |
+| `B` | Pack Cam | low on the deck behind the whole field |
+| `V` | Drone Cam | high and behind, the field plus the track ahead |
+| `F` | Finish Line | locked across the lanes, doubles as the photo finish |
+| `O` | Overhead | top-down, best read of the gaps |
+| `X` | Free Cam | drag to orbit, wheel or pinch to dolly |
 
 `A` auto-cam · `R` instant replay · `S` slow motion · `C` mark a clip · `Space`
 pause · `←`/`→` scrub.
 
-**Auto-cam** opens on the gate, follows the drop, cuts to the leader on a lead
-change, reads the gaps from overhead at half distance, then locks the finish line
-off *before* the cars arrive. Taking a shot by hand while auto-cam is on steals a
-single cut and hands control back after a couple of seconds - so riding the
-director and grabbing only the shots that matter is a real way to work.
+Pack and Drone both follow the field rather than one car. They sit behind the
+last car but never further back than about 2.4 m from the leader, so one disaster
+run cannot drag the shot away from the race - past that the stragglers fall out of
+frame, which is what a real operator does.
+
+**Auto-cam** opens on the gate, follows the drop, goes to the drone as the field
+hits the flat, cuts to the leader on a lead change, reads the gaps from overhead,
+then locks the finish line off *before* the cars arrive. Left alone it rotates
+between the leader and the field-wide shots rather than sitting on one angle.
+Taking a shot by hand while auto-cam is on steals a single cut and hands control
+back after a couple of seconds - so riding the director and grabbing only the
+shots that matter is a real way to work.
 
 ## The physics
 
@@ -111,7 +123,8 @@ src/sim/         Renderer-free, headless, fully tested
   race.ts        Orchestrator -> results + 120 Hz recording + event stream
   events.ts      The race-state event stream and its scheduler
   archetypes.ts  Bot cars that differ in how they are built, not how they score
-src/broadcast/   cameras, auto-cam director, announcer
+src/broadcast/   cameras (fixed, per-lane and field-following), auto-cam
+                 director, announcer
 src/render/      R3F scene, lofted chassis, swept track, placement
 src/ui/          Overlay kit, switcher, setup, results
 ```

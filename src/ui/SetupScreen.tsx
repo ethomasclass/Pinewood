@@ -37,12 +37,14 @@ export function SetupScreen() {
           </p>
           <div className="keygrid">
             {[
-              ['1', 'Starting gate'],
-              ['2', 'Ramp'],
-              ['3', 'Finish line'],
-              ['4', 'Overhead'],
-              ['5', 'Free cam'],
-              ['6+', 'Lane chase'],
+              ['1-8', 'Chase that lane'],
+              ['G', 'Starting gate'],
+              ['D', 'Ramp (the drop)'],
+              ['B', 'Pack, from behind'],
+              ['V', 'Drone, high and behind'],
+              ['F', 'Finish line'],
+              ['O', 'Overhead'],
+              ['X', 'Free cam'],
               ['A', 'Auto-cam'],
               ['R', 'Replay'],
               ['S', 'Slow motion'],

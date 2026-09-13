@@ -9,7 +9,7 @@ import type { CarFrame, RaceEntry } from '../sim/race'
  * has a strong, predictable character.
  */
 
-export type FixedAngleId = 'gate' | 'ramp' | 'finish' | 'overhead' | 'free'
+export type FixedAngleId = 'gate' | 'ramp' | 'pack' | 'drone' | 'finish' | 'overhead' | 'free'
 export type CameraAngleId = FixedAngleId | `lane-${number}`
 
 export interface CameraAngleInfo {
@@ -25,41 +25,61 @@ export const FIXED_ANGLES: CameraAngleInfo[] = [
     id: 'gate',
     label: 'Starting Gate',
     short: 'GATE',
-    hotkey: '1',
+    hotkey: 'G',
     description: 'Tight on the pin drop and the first inch of motion.',
   },
   {
     id: 'ramp',
     label: 'Ramp Cam',
     short: 'RAMP',
-    hotkey: '2',
+    hotkey: 'D',
     description: 'Side-on through the descent, where weight placement shows.',
+  },
+  {
+    id: 'pack',
+    label: 'Pack Cam',
+    short: 'PACK',
+    hotkey: 'B',
+    description: 'Low behind the whole field, looking down the track as it strings out.',
+  },
+  {
+    id: 'drone',
+    label: 'Drone Cam',
+    short: 'DRONE',
+    hotkey: 'V',
+    description: 'High and behind, tracking the whole field. Gaps and track ahead in one shot.',
   },
   {
     id: 'finish',
     label: 'Finish Line',
     short: 'FIN',
-    hotkey: '3',
+    hotkey: 'F',
     description: 'Locked across all lanes at the line. Doubles as the photo finish.',
   },
   {
     id: 'overhead',
     label: 'Overhead',
     short: 'OVER',
-    hotkey: '4',
+    hotkey: 'O',
     description: 'Top-down on the whole field. Best read of the gaps.',
   },
   {
     id: 'free',
     label: 'Free Cam',
     short: 'FREE',
-    hotkey: '5',
+    hotkey: 'X',
     description: 'Your own orbit. Drag to fly, for style shots between heats.',
   },
 ]
 
-/** Lane cams take the number keys after the fixed angles. */
-export const laneHotkey = (lane: number): string => String(lane + 6)
+/**
+ * Lane cams take the plain number keys: lane 3 is key 3, which is the only mapping
+ * a director should have to remember. The fixed angles take mnemonic letters, which
+ * also fixes a real bug -- lane cams used to be numbered after the fixed angles, so
+ * with a full field of eight the last lanes landed on "10" through "13" and had no
+ * working key at all.
+ */
+export const laneHotkey = (lane: number): string => String(lane + 1)
 
 export interface ShotContext {
   track: TrackGeometry
@@ -96,6 +116,29 @@ function carPoint(ctx: ShotContext, index: number, lift = 0.03): THREE.Vector3 {
     p.y + Math.cos(slope) * lift,
     ctx.track.laneOffset(entry.lane) + frame.y,
   )
+}
+
+/** Leading and trailing nose positions in the field. */
+function packBounds(ctx: ShotContext): { front: number; back: number } {
+  let front = -Infinity
+  let back = Infinity
+  for (const frame of ctx.frames) {
+    front = Math.max(front, frame.s)
+    back = Math.min(back, frame.s)
+  }
+  if (!Number.isFinite(front)) return { front: 0, back: 0 }
+  return { front, back }
+}
+
+/**
+ * Where a following camera sits: behind the last car, but never so far back that a
+ * disaster run drags the shot away from the race. Once the field strings out past
+ * this, the camera holds with the leaders and lets the stragglers fall out of frame,
+ * which is what a real operator does.
+ */
+function chaseAnchor(ctx: ShotContext, trail: number): number {
+  const { front, back } = packBounds(ctx)
+  return Math.max(back, front - 2.4) - trail
 }
 
 function packCentre(ctx: ShotContext): THREE.Vector3 {
@@ -145,6 +188,37 @@ export function computeShot(angle: CameraAngleId, ctx: ShotContext): Shot {
         fov: 40,
         up: Y_UP,
         smoothing: 10,
+      }
+    }
+    case 'pack': {
+      // Down on the deck behind the field. The cars run away from you and the gaps
+      // open up along the frame, which no side-on angle shows.
+      const anchor = chaseAnchor(ctx, 0.8)
+      const p = track.pointAt(anchor)
+      const slope = track.slopeAt(anchor)
+      const { front, back } = packBounds(ctx)
+      const focus = track.pointAt((front + back) / 2 + 0.35)
+      return {
+        position: new THREE.Vector3(p.x + Math.sin(slope) * 0.13, p.y + Math.cos(slope) * 0.13, 0),
+        target: new THREE.Vector3(focus.x, focus.y + 0.03, 0),
+        fov: 48,
+        up: Y_UP,
+        smoothing: 9,
+      }
+    }
+    case 'drone': {
+      // High and trailing, tilted down over the field: the whole pack plus the track
+      // it is running into, which is the shot for reading a gap before it closes.
+      const anchor = chaseAnchor(ctx, 1.6)
+      const p = track.pointAt(anchor)
+      const { front, back } = packBounds(ctx)
+      const focus = track.pointAt((front + back) / 2 + 0.55)
+      return {
+        position: new THREE.Vector3(p.x, p.y + 1.05, 0),
+        target: new THREE.Vector3(focus.x, focus.y, 0),
+        fov: 42,
+        up: Y_UP,
+        smoothing: 6,
       }
     }
     case 'finish': {

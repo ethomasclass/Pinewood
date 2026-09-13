@@ -267,12 +267,7 @@ function DirectorLoop({
       commentary.consume(event, race.results)
       for (let i = before; i < commentary.all.length; i++) feed.addLine(commentary.all[i])
 
-      director.onEvent(event, {
-        track: race.geometry,
-        entries: race.entries,
-        leaderLane: race.winner,
-        leadProgress: 0,
-      })
+      director.onEvent(event)
 
       switch (event.type) {
         case 'gate-release':

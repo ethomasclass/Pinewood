@@ -77,7 +77,7 @@ export class AutoCamDirector {
     return this.overrideAngle !== null
   }
 
-  onEvent(event: RaceEvent, ctx: AutoCamContext): void {
+  onEvent(event: RaceEvent): void {
     switch (event.type) {
       case 'gate-release':
         this.request({ angle: 'gate', priority: 5, expires: event.t + 0.9, reason: 'Gate drop' })
@@ -87,12 +87,9 @@ export class AutoCamDirector {
         this.request({ angle: 'ramp', priority: 6, expires: event.t + 0.8, reason: 'Into the drop' })
         break
       case 'drop-exit':
-        this.request({
-          angle: `lane-${ctx.leaderLane}`,
-          priority: 4,
-          expires: event.t + 0.9,
-          reason: 'Out of the transition',
-        })
+        // Onto the flat, where the field strings out. The drone reads that better
+        // than a single lane does.
+        this.request({ angle: 'drone', priority: 5, expires: event.t + 1, reason: 'Field onto the flat' })
         break
       case 'lead-change':
         this.request({
@@ -125,6 +122,8 @@ export class AutoCamDirector {
           this.request({ angle: 'finish', priority: 10, expires: event.t + 3, reason: 'Setting the finish' })
         } else if (event.milestone === 'half') {
           this.request({ angle: 'overhead', priority: 3, expires: event.t + 0.8, reason: 'Reading the gaps' })
+        } else if (event.milestone === 'quarter') {
+          this.request({ angle: 'pack', priority: 3, expires: event.t + 0.8, reason: 'Behind the field' })
         }
         break
       default:
@@ -165,16 +164,19 @@ export class AutoCamDirector {
       return this.current
     }
 
-    // Nothing asked for a cut and the shot has gone stale: fall back to whoever is
-    // winning, which is the shot a viewer wants by default.
+    // Nothing asked for a cut and the shot has gone stale. Rotate rather than sitting
+    // on one angle: the leader, then the shots that show the whole field, so a viewer
+    // gets both the battle at the front and the shape of the race behind it.
     if (elapsed >= MAX_SHOT) {
-      const fallback: CameraAngleId =
-        ctx.leadProgress < ctx.track.transitionStart
-          ? 'ramp'
-          : this.current === `lane-${ctx.leaderLane}`
-            ? 'overhead'
-            : `lane-${ctx.leaderLane}`
-      this.take(fallback, time, this.current === fallback ? this.lastReason : 'Staying with the leader')
+      if (ctx.leadProgress < ctx.track.transitionStart) {
+        this.take('ramp', time, 'Still on the descent')
+        return this.current
+      }
+      const rotation: CameraAngleId[] = [`lane-${ctx.leaderLane}`, 'drone', 'overhead', 'pack']
+      const reasons = ['Staying with the leader', 'Tracking the field', 'Reading the gaps', 'Behind the field']
+      const at = rotation.indexOf(this.current)
+      const next = (at + 1) % rotation.length
+      this.take(rotation[next], time, reasons[next])
       return this.current
     }
 
