@@ -11,9 +11,11 @@ import type { PaintJob } from '../sim/types'
  */
 
 const WIDTH = 512
-const HEIGHT = 256
-/** Matches UV_SIDE_TOP in geometry.ts. */
-const SIDE_BAND = 0.74
+const HEIGHT = 384
+/** Must match the UV bands in geometry.ts. */
+const RIGHT_BASE = 0
+const LEFT_BASE = 0.44
+const FLANK_BAND = 0.42
 
 const cache = new Map<string, THREE.CanvasTexture>()
 
@@ -33,66 +35,11 @@ export function createLiveryTexture(paint: PaintJob): THREE.CanvasTexture {
   ctx.fillStyle = paint.bodyColor
   ctx.fillRect(0, 0, WIDTH, HEIGHT)
 
-  // Canvas y grows downward while UV v grows upward, so the side artwork lives in
-  // the lower part of the canvas.
-  const sideTop = HEIGHT * (1 - SIDE_BAND)
-  const sideHeight = HEIGHT - sideTop
-
-  ctx.save()
-  ctx.beginPath()
-  ctx.rect(0, sideTop, WIDTH, sideHeight)
-  ctx.clip()
-
-  ctx.fillStyle = paint.accentColor
-  switch (paint.stripe) {
-    case 'centre':
-      ctx.fillRect(0, sideTop + sideHeight * 0.42, WIDTH, sideHeight * 0.16)
-      break
-    case 'twin':
-      ctx.fillRect(0, sideTop + sideHeight * 0.3, WIDTH, sideHeight * 0.08)
-      ctx.fillRect(0, sideTop + sideHeight * 0.58, WIDTH, sideHeight * 0.08)
-      break
-    case 'flames': {
-      ctx.beginPath()
-      ctx.moveTo(0, HEIGHT)
-      ctx.lineTo(0, sideTop + sideHeight * 0.2)
-      for (let i = 0; i < 7; i++) {
-        const x = (i / 7) * WIDTH * 0.75
-        const next = ((i + 1) / 7) * WIDTH * 0.75
-        ctx.quadraticCurveTo(
-          x + (next - x) * 0.5,
-          sideTop + sideHeight * (i % 2 === 0 ? 0.0 : 0.55),
-          next,
-          sideTop + sideHeight * (0.2 + i * 0.09),
-        )
-      }
-      ctx.lineTo(WIDTH * 0.75, HEIGHT)
-      ctx.closePath()
-      ctx.fill()
-      break
-    }
-    default:
-      break
-  }
-
-  // Race number on a roundel, sitting back over the rear wheel like a real derby car.
-  const cx = WIDTH * 0.68
-  const cy = sideTop + sideHeight * 0.5
-  const r = Math.min(sideHeight * 0.36, 52)
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, 0, Math.PI * 2)
-  ctx.fillStyle = '#fdfdfb'
-  ctx.fill()
-  ctx.lineWidth = 4
-  ctx.strokeStyle = 'rgba(20,20,24,0.55)'
-  ctx.stroke()
-  ctx.fillStyle = '#15151a'
-  ctx.font = `bold ${Math.round(r * 1.15)}px "Arial Black", system-ui, sans-serif`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(paint.number.slice(0, 2), cx, cy + 2)
-
-  ctx.restore()
+  // The same artwork twice: once for each flank, the second one pre-mirrored. A car
+  // is yawed a half turn to face down-track, so without this the race number reads
+  // backwards on whichever side the trackside cameras are on.
+  drawFlank(ctx, paint, RIGHT_BASE, false)
+  drawFlank(ctx, paint, LEFT_BASE, true)
 
   applyFinish(ctx, paint)
 
@@ -101,6 +48,94 @@ export function createLiveryTexture(paint: PaintJob): THREE.CanvasTexture {
   texture.anisotropy = 4
   cache.set(key, texture)
   return texture
+}
+
+/**
+ * Draws one flank's artwork into its UV band. Canvas y grows downward while UV v
+ * grows upward, so a band at v = base occupies the lower part of its slice.
+ *
+ * Both bands use the same u mapping (u = distance from the nose), so layout
+ * positions stay identical -- the roundel sits over the rear wheel on both sides.
+ * Only the *directional* artwork is pre-flipped for the flank whose projection the
+ * viewer sees reversed: the digits and the flames. Flipping the whole band would
+ * move the roundel to the wrong end of the car.
+ */
+function drawFlank(ctx: CanvasRenderingContext2D, paint: PaintJob, base: number, mirror: boolean): void {
+  const bandHeight = FLANK_BAND * HEIGHT
+  const bandTop = HEIGHT - (base + FLANK_BAND) * HEIGHT
+
+  const flipAround = (x: number, y: number) => {
+    ctx.translate(x, y)
+    ctx.scale(-1, 1)
+    ctx.translate(-x, -y)
+  }
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(0, bandTop, WIDTH, bandHeight)
+  ctx.clip()
+  ctx.translate(0, bandTop)
+
+  ctx.fillStyle = paint.bodyColor
+  ctx.fillRect(0, 0, WIDTH, bandHeight)
+
+  ctx.fillStyle = paint.accentColor
+  switch (paint.stripe) {
+    case 'centre':
+      ctx.fillRect(0, bandHeight * 0.42, WIDTH, bandHeight * 0.16)
+      break
+    case 'twin':
+      ctx.fillRect(0, bandHeight * 0.3, WIDTH, bandHeight * 0.08)
+      ctx.fillRect(0, bandHeight * 0.58, WIDTH, bandHeight * 0.08)
+      break
+    case 'flames': {
+      ctx.save()
+      if (mirror) flipAround(WIDTH / 2, bandHeight / 2)
+      ctx.beginPath()
+      ctx.moveTo(0, bandHeight)
+      ctx.lineTo(0, bandHeight * 0.2)
+      for (let i = 0; i < 7; i++) {
+        const x = (i / 7) * WIDTH * 0.75
+        const next = ((i + 1) / 7) * WIDTH * 0.75
+        ctx.quadraticCurveTo(
+          x + (next - x) * 0.5,
+          bandHeight * (i % 2 === 0 ? 0 : 0.55),
+          next,
+          bandHeight * (0.2 + i * 0.09),
+        )
+      }
+      ctx.lineTo(WIDTH * 0.75, bandHeight)
+      ctx.closePath()
+      ctx.fill()
+      ctx.restore()
+      break
+    }
+    default:
+      break
+  }
+
+  // Race number on a roundel, sitting back over the rear wheel like a real derby car.
+  const cx = WIDTH * 0.68
+  const cy = bandHeight * 0.5
+  const r = Math.min(bandHeight * 0.36, 52)
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.fillStyle = '#fdfdfb'
+  ctx.fill()
+  ctx.lineWidth = 4
+  ctx.strokeStyle = 'rgba(20,20,24,0.55)'
+  ctx.stroke()
+
+  // Pre-flip the digits on this flank so the viewer's reversed projection turns
+  // them back the right way round.
+  if (mirror) flipAround(cx, cy)
+  ctx.fillStyle = '#15151a'
+  ctx.font = `bold ${Math.round(r * 1.15)}px "Arial Black", system-ui, sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(paint.number.slice(0, 2), cx, cy + 2)
+
+  ctx.restore()
 }
 
 function applyFinish(ctx: CanvasRenderingContext2D, paint: PaintJob) {

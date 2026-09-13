@@ -9,12 +9,19 @@ import type { TrackGeometry } from '../sim/track'
  * nose down and both the silhouette and the centre of mass move together.
  */
 
-type Face = 'side' | 'cap' | 'deck'
+type Face = 'right' | 'left' | 'cap' | 'deck'
 
-/** UV bands inside the livery texture: the side view gets the artwork, the top and
- *  bottom sample a plain strip so the number is not smeared across the deck. */
-const UV_SIDE_TOP = 0.74
-const UV_PLAIN = 0.9
+/**
+ * UV bands inside the livery texture. The two flanks get their own band because a
+ * car is yawed a half turn to face down-track: sharing one band makes the race
+ * number read mirrored on whichever side the cameras are on. The second band holds
+ * the same artwork pre-mirrored. The top and bottom sample a plain strip so nothing
+ * is smeared across the deck.
+ */
+export const UV_RIGHT_BASE = 0
+export const UV_LEFT_BASE = 0.44
+export const UV_FLANK_BAND = 0.42
+const UV_PLAIN = 0.95
 
 class MeshBuilder {
   positions: number[] = []
@@ -45,8 +52,8 @@ class MeshBuilder {
 }
 
 const uvFor = (face: Face, u: number, heightFraction: number): [number, number] => {
-  if (face === 'side') return [u, heightFraction * UV_SIDE_TOP]
-  if (face === 'cap') return [u, heightFraction * UV_SIDE_TOP]
+  if (face === 'left') return [u, UV_LEFT_BASE + heightFraction * UV_FLANK_BAND]
+  if (face === 'right' || face === 'cap') return [u, UV_RIGHT_BASE + heightFraction * UV_FLANK_BAND]
   return [u, UV_PLAIN]
 }
 
@@ -83,19 +90,19 @@ export function buildChassisGeometry(profile: ChassisProfile, stationCount = 56)
     const h1b = stations[i + 1].bottom / maxHeight
     const h1t = stations[i + 1].top / maxHeight
 
-    // Right flank
+    // Right flank (local +Z, which faces away from the trackside cameras)
     builder.quad(corner(i, 1), corner(i + 1, 1), corner(i + 1, 2), corner(i, 2), [
-      uvFor('side', u0, h0b),
-      uvFor('side', u1, h1b),
-      uvFor('side', u1, h1t),
-      uvFor('side', u0, h0t),
+      uvFor('right', u0, h0b),
+      uvFor('right', u1, h1b),
+      uvFor('right', u1, h1t),
+      uvFor('right', u0, h0t),
     ])
-    // Left flank
+    // Left flank (local -Z, the side the trackside cameras actually see)
     builder.quad(corner(i + 1, 0), corner(i, 0), corner(i, 3), corner(i + 1, 3), [
-      uvFor('side', u1, h1b),
-      uvFor('side', u0, h0b),
-      uvFor('side', u0, h0t),
-      uvFor('side', u1, h1t),
+      uvFor('left', u1, h1b),
+      uvFor('left', u0, h0b),
+      uvFor('left', u0, h0t),
+      uvFor('left', u1, h1t),
     ])
     // Deck
     builder.quad(corner(i, 3), corner(i, 2), corner(i + 1, 2), corner(i + 1, 3), [

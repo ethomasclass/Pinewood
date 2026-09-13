@@ -150,7 +150,7 @@ export function computeShot(angle: CameraAngleId, ctx: ShotContext): Shot {
       // a photo finish, and why the replay system reaches for it first.
       const line = track.pointAt(spec.length)
       return {
-        position: new THREE.Vector3(line.x + 0.46, line.y + 0.13, halfWidth + 0.3),
+        position: new THREE.Vector3(line.x + 0.5, line.y + 0.22, halfWidth + 0.34),
         target: new THREE.Vector3(line.x - 0.1, line.y + 0.03, 0),
         fov: 34,
         up: Y_UP,

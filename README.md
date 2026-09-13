@@ -127,5 +127,4 @@ ready for a garage and share codes.
 
 Also outstanding from the brief: bracket format (single heat and best-of-three
 work), ghost overlays, clip export to video (clips are marked and stored, but
-replay only), and voice-acted announcer lines (text only). Liveries read mirrored
-from the left flank, which no current camera angle shows.
+replay only), and voice-acted announcer lines (text only).
